@@ -4,6 +4,10 @@ from .helpers import *
 from .models import *
 from django.contrib.messages import success,error
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate,login,logout
+
+@login_required
 def index(request):
     context = {}
     bookings = Booking.objects.all()
@@ -18,6 +22,7 @@ def index(request):
 
     return render(request,'core/index.html',context)
 
+@login_required
 def book_hall(request):
 
     if request.POST:
@@ -46,3 +51,27 @@ def book_hall(request):
     else:
         return HttpResponse("Invalid Request")
     return redirect('index')
+
+@login_required
+def logout_page(request):
+    logout(request)
+    success(request,'Loged Out')
+    return redirect('login')
+
+
+def login_page(request):
+    
+    if request.POST:
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        try : 
+            user = authenticate(request,username=username,password=password)
+
+            if user is not None:
+                login(request,user)
+                success(request,"Welcome "+request.user.username)
+                return redirect("index")
+        except Exception as e:
+            error(request,e)    
+
+    return render(request,'core/login.html',{})
